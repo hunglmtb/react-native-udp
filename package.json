@@ -1,6 +1,6 @@
 {
   "name": "react-native-udp-ts",
-  "version": "4.1.2002",
+  "version": "4.1.2005",
   "description": "React Native UDP socket API for Android & iOS",
   "homepage": "https://github.com/hunglmtb/react-native-udp",
   "main": "src/index.js",
