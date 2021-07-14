@@ -6,6 +6,9 @@
 //  Copyright (c) 2015 Tradle, Inc. All rights reserved.
 //
 
+#if __has_include("RCTAssert.h")
+#import "RCTAssert.h"
+#else
 #import <React/RCTAssert.h>
 #import <React/RCTBridge.h>
 #import <React/RCTConvert.h>

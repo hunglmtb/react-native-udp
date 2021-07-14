@@ -9,7 +9,11 @@
 #import <netinet/in.h>
 #import <arpa/inet.h>
 #import "UdpSocketClient.h"
+#if __has_include("RCTBridgeModule.h")
+#import "RCTBridgeModule.h"
+#else
 #import <React/RCTBridgeModule.h>
+#endif
 #import "GCDAsyncUdpSocket.h"
 
 NSString *const RCTUDPErrorDomain = @"RCTUDPErrorDomain";
