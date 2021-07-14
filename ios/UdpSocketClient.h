@@ -11,7 +11,7 @@
 #import "RCTBridgeModule.h"
 #else
 #import <React/RCTBridgeModule.h>
-
+#endif
 extern NSString *const RCTUDPErrorDomain;
 
 enum RCTUDPError

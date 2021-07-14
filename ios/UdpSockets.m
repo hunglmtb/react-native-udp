@@ -10,6 +10,7 @@
 #import "RCTAssert.h"
 #else
 #import <React/RCTAssert.h>
+#endif
 #import <React/RCTBridge.h>
 #import <React/RCTConvert.h>
 #import <React/RCTEventDispatcher.h>
