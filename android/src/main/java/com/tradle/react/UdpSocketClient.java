@@ -1,6 +1,5 @@
 package com.tradle.react;
 
-import androidx.annotation.Nullable;
 import android.util.Base64;
 
 import com.facebook.react.bridge.Callback;
@@ -15,8 +14,12 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.tradle.react.UdpSenderTask.OnDataSentListener;
+
+import javax.annotation.Nullable;
 
 /**
  * Client class that wraps a sender and a receiver for UDP data.
@@ -25,13 +28,15 @@ public final class UdpSocketClient implements UdpReceiverTask.OnDataReceivedList
     private final OnDataReceivedListener mReceiverListener;
     private final OnRuntimeExceptionListener mExceptionListener;
 
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+
     private UdpReceiverTask mReceiverTask;
 
     private final Map<UdpSenderTask, Callback> mPendingSends;
     private DatagramSocket mSocket;
     private boolean mIsMulticastSocket = false;
 
-    public UdpSocketClient(OnDataReceivedListener receiverListener,  OnRuntimeExceptionListener exceptionListener) {
+    public UdpSocketClient(OnDataReceivedListener receiverListener, OnRuntimeExceptionListener exceptionListener) {
         this.mReceiverListener = receiverListener;
         this.mExceptionListener = exceptionListener;
         this.mPendingSends = new ConcurrentHashMap<>();
@@ -125,10 +130,7 @@ public final class UdpSocketClient implements UdpReceiverTask.OnDataReceivedList
 
         byte[] data = Base64.decode(base64String, Base64.NO_WRAP);
 
-        UdpSenderTask task = new UdpSenderTask(mSocket, this);
-        UdpSenderTask.SenderPacket packet = new UdpSenderTask.SenderPacket();
-        packet.data = data;
-        packet.socketAddress = new InetSocketAddress(InetAddress.getByName(address), port);
+        UdpSenderTask task = new UdpSenderTask(mSocket, this, new InetSocketAddress(InetAddress.getByName(address), port), data);
 
         if (callback != null) {
             synchronized (mPendingSends) {
@@ -136,7 +138,7 @@ public final class UdpSocketClient implements UdpReceiverTask.OnDataReceivedList
             }
         }
 
-        task.execute(packet);
+        executor.submit(task);
     }
 
     /**
@@ -156,6 +158,9 @@ public final class UdpSocketClient implements UdpReceiverTask.OnDataReceivedList
         if (mReceiverTask != null && mReceiverTask.isRunning()) {
             mReceiverTask.terminate();
         }
+
+        // stop pending send tasks
+        executor.shutdownNow();
 
         // close the socket
         if (mSocket != null && !mSocket.isClosed()) {
@@ -220,7 +225,7 @@ public final class UdpSocketClient implements UdpReceiverTask.OnDataReceivedList
         }
 
         if (callback != null) {
-            callback.invoke(UdpErrorUtil.getError(null, error));
+            callback.invoke(UdpErrorUtil.getError(UdpErrorCodes.sendError.name(), error));
         }
     }
 

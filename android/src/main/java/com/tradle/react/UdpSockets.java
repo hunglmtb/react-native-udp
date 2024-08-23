@@ -3,9 +3,6 @@ package com.tradle.react;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import android.util.SparseArray;
 
 import com.facebook.common.logging.FLog;
@@ -25,6 +22,9 @@ import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * The NativeModule in charge of storing active {@link UdpSocketClient}s, and acting as an api layer.
  */
@@ -41,7 +41,7 @@ public final class UdpSockets extends ReactContextBaseJavaModule
         super(reactContext);
     }
 
-    @NonNull
+    @Nonnull
     @Override
     public String getName() {
         return TAG;
@@ -66,7 +66,7 @@ public final class UdpSockets extends ReactContextBaseJavaModule
     }
 
     /**
-     * Private method to retrieve clients. Must be called from a GuardedAsyncTask for thread-safety.
+     * Private method to retrieve clients.
      */
     private UdpSocketClient findClient(final Integer cId, final Callback callback) {
         final UdpSocketClient client = mClients.get(cId);
@@ -74,7 +74,7 @@ public final class UdpSockets extends ReactContextBaseJavaModule
             if (callback == null) {
                 FLog.e(TAG, "missing callback parameter.");
             } else {
-                callback.invoke(UdpErrorUtil.getError(null, "no client found with id " + cId), null);
+                callback.invoke(UdpErrorUtil.getError(UdpErrorCodes.clientNotFound.name(), "no client found with id " + cId), null);
             }
         }
 
@@ -123,7 +123,7 @@ public final class UdpSockets extends ReactContextBaseJavaModule
                     callback.invoke(null, result);
                 } catch (Exception e) {
                     // Socket is already bound or a problem occurred during binding
-                    callback.invoke(UdpErrorUtil.getError(null, e.getMessage()));
+                    callback.invoke(UdpErrorUtil.getError(UdpErrorCodes.socketAlreadyBoundError.name(), e.getMessage()));
                 }
             }
         }));
@@ -220,13 +220,8 @@ public final class UdpSockets extends ReactContextBaseJavaModule
 
                 try {
                     client.send(base64String, port, address, callback);
-                } catch (IllegalStateException ise) {
-                    callback.invoke(UdpErrorUtil.getError(null, ise.getMessage()));
-                } catch (UnknownHostException uhe) {
-                    callback.invoke(UdpErrorUtil.getError(null, uhe.getMessage()));
-                } catch (IOException ioe) {
-                    // an exception occurred
-                    callback.invoke(UdpErrorUtil.getError(null, ioe.getMessage()));
+                } catch (Exception exception) {
+                    callback.invoke((UdpErrorUtil.getError(UdpErrorCodes.sendError.name(), exception.getMessage())));
                 }
             }
         }));
@@ -273,7 +268,7 @@ public final class UdpSockets extends ReactContextBaseJavaModule
                     client.setBroadcast(flag);
                     callback.invoke();
                 } catch (SocketException e) {
-                    callback.invoke(UdpErrorUtil.getError(null, e.getMessage()));
+                    callback.invoke(UdpErrorUtil.getError(UdpErrorCodes.setBroadcast.name(), e.getMessage()));
                 }
             }
         }));
